@@ -1,0 +1,26 @@
+name: Test API Health End Point and API Validations
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        npm install
+    - name: Run tests
+      run: |
+        npm test test.js
+    - name: Report test results
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-results
+        path: test/reports
