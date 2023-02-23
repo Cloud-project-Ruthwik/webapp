@@ -1,7 +1,7 @@
 name: test
 # this is to build the artifact and run the packer file
 on:
-  pull_request:
+  push:
     branches:
       - main      
 jobs:
