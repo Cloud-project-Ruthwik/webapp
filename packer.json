@@ -1,0 +1,55 @@
+{
+  "variables": {
+    "aws_region": "us-east-1",
+    "instance_type": "t2.micro",
+    "ssh_username": "ec2-user",
+    "ami_name": "nodejs-api-{{timestamp}}", 
+    "aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
+    "aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}"
+  },
+  "builders": [
+    {
+      "type": "amazon-ebs",
+      "access_key": "AKIAQW3PT3TC2X57GHVX",
+      "secret_key": "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",
+      "region": "{{user `aws_region`}}",
+      "tags" : {
+        "Name" :"AMI A4"
+      },
+      "source_ami_filter": {
+        "filters": {
+          "name": "amzn2-ami-hvm-2.0.????????.?-x86_64-gp2",
+          "root-device-type": "ebs"
+        },
+        "owners": ["amazon"],
+        "most_recent": true
+      },
+      "instance_type": "{{user `instance_type`}}",
+      "ssh_username": "{{user `ssh_username`}}",
+      "ami_name": "{{user `ami_name`}}",
+      "ami_users": ["615679487028","049089338565"]
+    }
+  ],
+  
+  "provisioners": [
+    {
+      "type": "file",
+      "source": "webapp.zip",
+      "destination": "/home/ec2-user/"
+  },
+  {
+      "type": "shell",
+      "inline": [
+          "unzip /home/ec2-user/webapp.zip -d /home/ec2-user/"
+      ]
+  },
+    {
+      "type": "shell",
+      "script": "setup.sh"
+    },
+    {
+      "type": "shell",
+      "script": "pm2.sh"
+    }
+  ]
+}

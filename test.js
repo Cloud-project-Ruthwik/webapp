@@ -16,7 +16,7 @@ describe('Test API Health End Point and API Validations', () => {
       });
     
   });
-  
+
   it(' Test API Health End Point', (done) => {
     request(app)
       .get('/v1/user/2')
@@ -44,7 +44,6 @@ describe('Test API Health End Point and API Validations', () => {
       });
     
   });
-
 
 });
 
