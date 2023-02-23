@@ -33,7 +33,7 @@ if(req.get('Authorization')){      //Checking if Basic Authorization is enabled 
         sku = req.body.sku;
         
 //The validations include entering all the values to add a product, making sure entered fields are not empty or white spaces.
-        if(req.body.quantity>=0 && req.body.quantity<=100 && validateTwo(req) && (JSON.stringify(req.body) == JSON.stringify(Objbg))){
+        if(req.body.quantity>=0 && req.body.quantity<=100 && validateOne(req) && validateTwo(req) && (JSON.stringify(req.body) == JSON.stringify(Objbg))){
             Product.findOne({where:{sku:sku}}).then((results) => {   //Checking if the sku value is unique or not
          if(!results){      
             let info = {
@@ -55,22 +55,23 @@ if(req.get('Authorization')){      //Checking if Basic Authorization is enabled 
 
 
 }
-    else {res.status(400).send("Bad Request");} // Sending a Unauthorized request if the Password is wrong
+    else {res.status(401).send("Unauthorized");} // Sending a Unauthorized request if the Password is wrong
 
 })
 
-}  else {res.status(400).send("Bad Request");}  }) // Sending a Unauthorized request if the Username does not exist
+}  else {res.status(401).send("Unauthorized");}  }) // Sending a Unauthorized request if the Username does not exist
 
    
     
 }
-else {res.status(401).send("Bad Request");}
+else {res.status(403).send("Forbidden");} //Forbidden if the authorization does not exist
 }
 
 
 const updateProduct = async (req, res) => {
 
     const id = req.params.id;
+    if(id>0){
     Product.findOne({where:{id:id}}).then((results) => {  //Check if the Product ID exists or not
     if(results){
     const date = new Date();
@@ -90,7 +91,7 @@ const updateProduct = async (req, res) => {
             bcrypt.compare(password, r.password, (err, result) => { //Check if the password matches
                 if(result){
 //Check for Validations
-                    if(req.body.quantity>=0 && req.body.quantity<=100 && validateTwo(req) && (JSON.stringify(req.body) == JSON.stringify(Objbg))){
+                    if(req.body.quantity>=0 && req.body.quantity<=100 && validateOne(req) && validateTwo(req) && (JSON.stringify(req.body) == JSON.stringify(Objbg))){
                         Product.findOne({where:{sku:req.body.sku}}).then((results) => {  //Check if Sku exists or not
                      if(!results || results.id==id){  
                         
@@ -130,6 +131,7 @@ const updateProduct = async (req, res) => {
 }
 else {res.status(400).send("Bad Request");}   // Send a Bad Request if the Product ID does not exist
 })
+}else {res.status(403).send("Forbidden");} 
 }
 
 const getAllProducts = async (req, res) => {
@@ -139,7 +141,6 @@ const getAllProducts = async (req, res) => {
 
 const getProduct = async (req, res) => {
     let id = req.params.id;
-
     Product.findOne({where:{id:id}}).then((users)=>{   
         if(users){     
 
@@ -161,6 +162,7 @@ const getProduct = async (req, res) => {
 const deleteProduct = async (req, res) => {
 
     const id = req.params.id;
+    if(id>0){
     Product.findOne({where:{id:id}}).then((results) => {  //Check if the Product ID exists or not
     if(results){
 
@@ -193,8 +195,9 @@ const deleteProduct = async (req, res) => {
     }else {res.status(404).send("Not Found");}
 
 })
-
+    }else {res.status(403).send("Forbidden");} 
 } 
+
 
 const patchProduct = async (req, res) => {
     Objbg = {                                      // Creating a JSON Object with required variables of Payload.
@@ -207,6 +210,7 @@ const patchProduct = async (req, res) => {
 
 
     const id = req.params.id;
+    if(id>0){
     Product.findOne({where:{id:id}}).then((results) => {  //Check if the Product ID exists or not
     if(results){
 
@@ -232,6 +236,10 @@ const patchProduct = async (req, res) => {
                               }
 
                               if(req.body.sku === undefined){
+
+                                
+
+                                if(validateThree(req)&&validateOne(req)){
                                 Product.update(info, {where: {id: id, owner_user_id:r.id}} ).then((sanju)=>{  //Update the product if the user id is matching
     
                                     if(sanju[0]){res.status(204).send("No Content");}  //Updated successfully
@@ -239,7 +247,7 @@ const patchProduct = async (req, res) => {
             
                                 })
                                                                 
-
+                            } else{res.status(400).send("Bad Request");}  // Send a Bad Request if quantity validation does not pass
                               }
                               else{
                                 Product.findOne({where:{sku:req.body.sku}}).then((r1) =>{
@@ -250,14 +258,16 @@ const patchProduct = async (req, res) => {
         
                                         }
                                         else{
+
+                                            if(validateThree(req)&&validateOne(req)){
                                             console.log("inside if r1 --2")
                                             Product.update(info, {where: {id: id, owner_user_id:r.id}} ).then((sanju)=>{  //Update the product if the user id is matching
     
                                                 if(sanju[0]){res.status(204).send("No Content");}  //Updated successfully
-                                                else{res.status(400).send("Bad Request");}   //Send a Bad Request if the User ID is not matching
+                                                else{res.status(403).send("Forbidden");}   //Send a Bad Request if the User ID is not matching
                         
                                             })
-                                            
+                                        } else{res.status(400).send("Bad Request");}  //Send a Bad Request if the quantity validation does not pass
 
                                         }
 
@@ -266,7 +276,7 @@ const patchProduct = async (req, res) => {
                                         Product.update(info, {where: {id: id, owner_user_id:r.id}} ).then((sanju)=>{  //Update the product if the user id is matching
     
                                             if(sanju[0]){res.status(204).send("No Content");}  //Updated successfully
-                                            else{res.status(400).send("Bad Request");}   //Send a Bad Request if the User ID is not matching
+                                            else{res.status(403).send("Forbidden");}   //Send Forbidden if the User ID is not matching
                     
                                         })
 
@@ -274,42 +284,22 @@ const patchProduct = async (req, res) => {
                                 })
 
                               }
-                            //   Product.findOne({where:{sku:req.body.sku}}).then((r1) =>{
-                            //     if(r1 || !r1.id == id){
-                            //         res.status(400).send("Bad Request");
-
-                            //     }
-                            //     else{
-                            //         Product.update(info, {where: {id: id, owner_user_id:r.id}} ).then((sanju)=>{  //Update the product if the user id is matching
-
-                            //             if(sanju[0]){res.status(204).send("No Content");}  //Updated successfully
-                            //             else{res.status(400).send("Bad Request");}   //Send a Bad Request if the User ID is not matching
-                
-                            //         })
-                            //     }
-                            //   })
-
-                            // Product.update(info, {where: {id: id, owner_user_id:r.id}} ).then((sanju)=>{  //Update the product if the user id is matching
-
-                            //     if(sanju[0]){res.status(204).send("No Content");}  //Updated successfully
-                            //     else{res.status(400).send("Bad Request");}   //Send a Bad Request if the User ID is not matching
-        
-                            // })
+                          
 
                         } else{res.status(400).send("Bad Request");} //Send a Bad Request of the Required fields are not there
 
-                    }else {res.status(401).send("Unauthorized");}
+                    }else {res.status(401).send("Unauthorized");} // Send Unauthorized if the Password Does not Match
                 })
-            } else {res.status(401).send("Unauthorized");}
+            } else {res.status(401).send("Unauthorized");} //If the Username does not match or exist
         
         })
-            }  else {res.status(400).send("Bad Request");} 
+            }  else {res.status(400).send("Bad Request");} //If Authorization is not enabled
 
 
     }else {res.status(403).send("Forbidden");} //Forbidden if the ID does not exist
 
 })
-
+    }else {res.status(403).send("Forbidden");} 
 
 }
 
@@ -320,6 +310,31 @@ const validateTwo = (req) => {
         return true
     }
     return false
+}
+
+const validateThree = (req) => {
+    const id = req.params.id;
+    if(!(req.body.quantity===undefined)){  
+        if(req.body.quantity>=0 && req.body.quantity<=100 ){ 
+               return true;
+
+        }else{return false;}}
+
+        else{return true;}
+
+}
+
+const validateOne = (req) => {
+    const regex =  "^\\s*$";
+    const re =  '^[A-Za-z ]+';
+    if(!(req.body.quantity===undefined)){  
+    if(!req.body.description.match(regex) && req.body.description == null) {
+        
+        return true
+    }
+    return false}
+    else{return true;}
+
 }
 
 module.exports = {

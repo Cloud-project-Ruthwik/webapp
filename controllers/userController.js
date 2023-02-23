@@ -17,14 +17,14 @@ const addUsers = async(req, res)=>{
         "password": req.body.password,
         "username": req.body.username        
     };
-    const date = new Date();
+    const date = new Date(); //Check for validations
     if(validateThree(req)&&validateTwo(req)&&validateOne(req)&&(JSON.stringify(req.body) == JSON.stringify(Objbg))){
 
-    const username = req.body.username;
-    let u = await User.findOne({where:{username:username}})
+    const username = req.body.username; 
+    let u = await User.findOne({where:{username:username}})  //Check if the username exists or not
     if(!u){
 
-        bcrypt.hash(req.body.password, 10).then(hash => { 
+        bcrypt.hash(req.body.password, 10).then(hash => {  //Bcrypting the password 
         let info ={
             first_name: req.body.first_name,
             last_name: req.body.last_name,
@@ -34,7 +34,7 @@ const addUsers = async(req, res)=>{
             account_updated: date.toISOString()
         }
 
-  User.create(info).then((user)=>{
+  User.create(info).then((user)=>{ //Creating the user and pushing it to the database
     res.status(200).send({
 
        "id": user.id,
@@ -46,9 +46,9 @@ const addUsers = async(req, res)=>{
 
     })})
  }) }
-    else{res.status(400).send("Bad Request");}
+    else{res.status(400).send("Bad Request");} //Send Bad request if the email already exists
 }
-    else{res.status(400).send("Bad Request");} 
+    else{res.status(400).send("Bad Request");} //Send Bad Request if the validations do not pass
 
 }
 // Get all Users
@@ -73,20 +73,21 @@ const getAllUsers = async (req, res) => {
 
 const getUser = async (req, res) => {
     let id = req.params.id;
-
-     if(req.get('Authorization')){
+    if(id>0){
+    
+     if(req.get('Authorization')){ //Check for Authorization
 
         const credentials = Buffer.from(req.get('Authorization').split(' ')[1], 'base64').toString().split(':')
         const username = credentials[0]
         const password = credentials[1]
 
-        let users = await User.findOne({where:{id:id, username:username}})
+        let users = await User.findOne({where:{id:id, username:username}}) //Check if the user exists or not/Username is matching or not
         if(users){
 
-    bcrypt.compare(password, users.password, (err, result) => {
+    bcrypt.compare(password, users.password, (err, result) => { //Check if the Password match or not
         if(result){
          const p = users;
-    res.status(200).send({
+    res.status(200).send({ //Send the User details
         id: p.id,
         first_name: p.first_name, 
         last_name: p.last_name,
@@ -95,14 +96,14 @@ const getUser = async (req, res) => {
         account_updated: p.account_updated
     })}
     else{
-        res.status(401).send("Unauthorized");
+        res.status(401).send("Unauthorized"); //Send Unauthorized if the Password does not match
     }
 
 })}
-else {res.status(401).send("Unauthorized");}
+else {res.status(401).send("Unauthorized");} //Send Unauthorized if the Username does not match
 }
-else{res.status(403).send("Forbidden");}
-
+else{res.status(403).send("Forbidden");}  //Send Forbidden if the authorization is not given }
+}else{res.status(403).send("Forbidden")}
 }
 
 //Update User
@@ -110,6 +111,7 @@ else{res.status(403).send("Forbidden");}
 const updateUsers = async (req, res) => {
   const date = new Date();
     const id = req.params.id;
+    if(id>0){
     Objbg = {                                      // Creating a JSON Object with required variables of Payload.
         "first_name": req.body.first_name,
         "last_name": req.body.last_name,
@@ -126,19 +128,20 @@ const updateUsers = async (req, res) => {
             const username = credentials[0];
             const password = credentials[1];  //Check the authentication
 
-            if(u.username == username && username == req.body.username){
+            if( username == u.username){   //Check if the Username is matching the ID
 
-    bcrypt.compare(password, u.password, (err, result) => {
+
+    bcrypt.compare(password, u.password, (err, result) => { //Check if the Password is matching
 
         if(result){
-    //if(u.first_name == req.body.first_name || u.last_name == req.body.last_name)
 
-    bcrypt.hash(req.body.password, 10).then(hash => { 
+    bcrypt.hash(req.body.password, 10).then(hash => {
+        
+        if(u.username == req.body.username){ //Check if they are trying to update the username
+//Check if all the values entered are unique or not
+            if(u.first_name==req.body.first_name && u.last_name==req.body.last_name && req.body.password==password){
 
-        User.findOne({where:{id:id}}).then((sanju)=>{
-            if(sanju.first_name==req.body.first_name && sanju.last_name==req.body.last_name && sanju.password==password){
-
-                req.status(203).send("No Update necessary");
+                res.status(203).send("No Update necessary"); //If all the values are the same no updation is required
             }
 
             else{
@@ -149,27 +152,30 @@ const updateUsers = async (req, res) => {
         password: hash,
         account_updated: date.toISOString()
     }
-    const user = User.update(info, {where: {id: id}} )
-    res.status(204).send()}
-    })
+    const user = User.update(info, {where: {id: id}} ) //Update the User
+    res.status(204).send()}}  
+    else{res.status(401).send("Forbidden");}//Send Forbidden if the Username is trying to be updated
+
+   
 
 })
 
 
 }
-    else{res.status(401).send("Unauthorized")}
+    else{res.status(401).send("Unauthorized")} //Send Unauthorized if the Password is not matching
 })
         }
-        else{res.status(401).send("Unauthorized")}
+        else{res.status(401).send("Unauthorized")} //Send Unauthorized if the username is not matching
 
 }
 
-else{res.status(401).send("Unauthorized")}
+else{res.status(403).send("Forbidden")} //Send Forbidden if there is no Authorization
 
 }}
 
-    else{res.status(400).send("Bad Request");}
+    else{res.status(400).send("Bad Request");} //Send Bad Request if the validations are not passing
 
+}else{res.status(403).send("Forbidden")} 
 }
 
 const validateOne = (req) => {
