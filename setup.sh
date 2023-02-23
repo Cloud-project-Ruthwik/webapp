@@ -38,3 +38,5 @@ cd /home/ec2-user/webapp
 ls
 npm install -g npm@9.5.1
 npm install
+npm uninstall bcrypt
+npm install bcrypt
