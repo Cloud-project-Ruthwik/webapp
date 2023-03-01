@@ -16,4 +16,4 @@ Use postman for testing API endpoints
 
 APIs are built as per specifications here: https://app.swaggerhub.com/apis-docs/csye6225-webapp/cloud-native-webapp/spring2023-a1
 
-In order to make pull or merge requests the test cases in the workflow should pass
+In order to make pull or merge requests the test cases in the workflow should pass.
