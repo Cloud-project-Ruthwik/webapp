@@ -1,6 +1,6 @@
 {
   "variables": {
-    "aws_region": "us-east-1",
+    "aws_region": "us-east-2",
     "instance_type": "t2.micro",
     "ssh_username": "ec2-user",
     "ami_name": "nodejs-api-{{timestamp}}", 
@@ -12,7 +12,7 @@
       "type": "amazon-ebs",
       "access_key": "AKIA43CQGNCOOR62CR7Y",
       "secret_key": "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",
-      "region": "{{user `aws_region`}}",
+      "region": "us-east-1",
       "tags" : {
         "Name" :"AMI A4"
       },
@@ -27,7 +27,7 @@
       "instance_type": "{{user `instance_type`}}",
       "ssh_username": "{{user `ssh_username`}}",
       "ami_name": "{{user `ami_name`}}",
-      "ami_users": ["882783971484","763590384604"]
+      "ami_users": ["882783971484","763590384604"] 
     }
   ],
   

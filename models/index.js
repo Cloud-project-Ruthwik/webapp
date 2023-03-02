@@ -33,7 +33,7 @@ db.sequelize = sequelize
 
 db.stud = require('./users.js')(sequelize, DataTypes)
 db.product = require('./products.js')(sequelize, DataTypes)
-
+db.image = require('./images.js')(sequelize, DataTypes)
 db.sequelize.sync({force:false}).then(()=>{
     console.log('yes re-sync is done');
 })
