@@ -9,16 +9,9 @@ const Product = db.product
 //1. Create Users
 
 const addUsers = async(req, res)=>{
-
-
-    Objbg = {                                      // Creating a JSON Object with required variables of Payload.
-        "first_name": req.body.first_name,
-        "last_name": req.body.last_name,
-        "password": req.body.password,
-        "username": req.body.username        
-    };
+    const numFields = Object.keys(req.body).length;
     const date = new Date(); //Check for validations
-    if(validateThree(req)&&validateTwo(req)&&validateOne(req)&&(JSON.stringify(req.body) == JSON.stringify(Objbg))){
+    if(validateThree(req)&&validateTwo(req)&&validateOne(req)&&numFields==4){
 
     const username = req.body.username; 
     let u = await User.findOne({where:{username:username}})  //Check if the username exists or not
@@ -112,13 +105,8 @@ const updateUsers = async (req, res) => {
   const date = new Date();
     const id = req.params.id;
     if(id>0){
-    Objbg = {                                      // Creating a JSON Object with required variables of Payload.
-        "first_name": req.body.first_name,
-        "last_name": req.body.last_name,
-        "password": req.body.password,
-        "username": req.body.username        
-    };
-    if(validateThree(req)&&validateTwo(req)&&validateOne(req)&&(JSON.stringify(req.body) == JSON.stringify(Objbg))){ //Check the validations
+    const numFields = Object.keys(req.body).length;
+    if(validateThree(req)&&validateTwo(req)&&validateOne(req)&& numFields==4){ //Check the validations
     let u = await User.findOne({where:{id:id}})
     if(!u){res.status(403).send("Forbidden");} //Check if the ID exists or not
     else {
@@ -191,7 +179,8 @@ const validateOne = (req) => {
 // Function to check if the required fields is present or not in the payload 
 const validateTwo = (req) => {
     const regex =  "^\\s*$";
-    if(!(req.body.username===undefined) && !(req.body.password===undefined )&&!(req.body.first_name===undefined) &&!(req.body.last_name===undefined)) {
+    if(!(req.body.username===undefined) && !(req.body.password===undefined )&&!(req.body.first_name===undefined) &&!(req.body.last_name===undefined)
+    && req.body.account_created===undefined && req.body.account_updated===undefined && req.body.id===undefined) {
 
         return true
     }

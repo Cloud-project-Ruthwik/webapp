@@ -1,19 +1,25 @@
+
 # webapp
 
-networks and cloud computing assignment
 
-Made using Node.js, Express.js
+networks and cloud computing assignments
 
-To run, you need to install Node.js on your machine refer to this: https://nodejs.org/en/download/
+Made using Node.js, Express.js, Packer
 
-for installation Move to the cloned repository and run "npm install" to install all packages mentioned in the dependencies section of package.json
+To run, you need to install Node.js on your machine refer to this: https://nodejs.org/en/download/ 
 
-To run the server, use "node ./server.js" that runs the server.js file after cloning through preferably Visual Studio Code
+for installation Move to the cloned repository and run "npm install" to install all packages mentioned in the dependencies section of package.json 
 
-Server listens on port 3000 by default
+To run the server, use "node ./server.js" that runs the server.js file after cloning through preferably Visual Studio Code 
+
+Server listens on port 3000 by default 
 
 Use postman for testing API endpoints
 
-APIs are built as per specifications here: https://app.swaggerhub.com/apis-docs/csye6225-webapp/cloud-native-webapp/spring2023-a1
 
-In order to make pull or merge requests the test cases in the workflow should pass
+APIs are built as per specifications here:  https://app.swaggerhub.com/apis-docs/csye6225-webapp/cloud-native-webapp/spring2023-a2
+ 
+In order to make pull or merge requests the test cases in the workflow should pass. 
+
+The entire application is deployed on an EC2 instance using Packer
+Run the above code to create an AMI which can be used to create the necessary EC2 instances.

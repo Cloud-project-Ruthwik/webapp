@@ -1,26 +1,21 @@
-name: test
-# this is to build the artifact and run the packer file
+name: Test
+
 on:
-  push:
+  pull_request:
     branches:
-      - main      
+      - main
+
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
 
     steps:
-     - name: Checkout code
-       uses: actions/checkout@v2
-     - name: Building the Artifacts
-       run: zip -r webapp.zip .
+    - name: Checkout code
+      uses: actions/checkout@v2
+      
+    - name: Building the Artifacts
+      run: zip -r webapp.zip .
        
-     - name: Validate Packer template        
-       run: packer validate packer.json
-       
-     - name: Packer Build
-       uses: ExitoLab/packer_build_action_aws@v0.2.10
-       with:
-        templateFile: 'packer.json'
-       env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}          
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    - name: Validate Packer template        
+      run: packer validate packer.json
+

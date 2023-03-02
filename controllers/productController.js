@@ -1,10 +1,12 @@
 const db = require('../models');
 const bcrypt = require("bcrypt");     
 const { and } = require('sequelize');
+const regex =  '^[A-Za-z ]+';
 //create main model
 
 const User = db.stud;
 const Product = db.product;
+const Image = db.image;
 
 //functions
 
@@ -12,13 +14,7 @@ const Product = db.product;
 
 const addProduct = async (req, res) => {
 const date = new Date();
-Objbg = {                                      // Creating a JSON Object with required variables of Payload.
-    "name": req.body.name,
-    "description": req.body.description,
-    "sku": req.body.sku,
-    "manufacturer": req.body.manufacturer,
-    "quantity": req.body.quantity     
-};
+const numFields = Object.keys(req.body).length;
 if(req.get('Authorization')){      //Checking if Basic Authorization is enabled or not
     const credentials = Buffer.from(req.get('Authorization').split(' ')[1], 'base64').toString().split(':')
     const username = credentials[0]
@@ -33,7 +29,7 @@ if(req.get('Authorization')){      //Checking if Basic Authorization is enabled 
         sku = req.body.sku;
         
 //The validations include entering all the values to add a product, making sure entered fields are not empty or white spaces.
-        if(req.body.quantity>=0 && req.body.quantity<=100 && validateOne(req) && validateTwo(req) && (JSON.stringify(req.body) == JSON.stringify(Objbg))){
+        if(req.body.quantity>=0 && req.body.quantity<=100 && !(req.body.description === "") && !req.body.description.match(/\s/) && req.body.description != null && validateTwo(req) && numFields==5){
             Product.findOne({where:{sku:sku}}).then((results) => {   //Checking if the sku value is unique or not
          if(!results){      
             let info = {
@@ -75,13 +71,7 @@ const updateProduct = async (req, res) => {
     Product.findOne({where:{id:id}}).then((results) => {  //Check if the Product ID exists or not
     if(results){
     const date = new Date();
-    Objbg = {                                      // Creating a JSON Object with required variables of Payload.
-        "name": req.body.name,
-        "description": req.body.description,
-        "sku": req.body.sku,
-        "manufacturer": req.body.manufacturer,
-        "quantity": req.body.quantity     
-    };
+    const numFields = Object.keys(req.body).length;
     if(req.get('Authorization')){   //Check if the Basic Authentication is Enabled or not
         const credentials = Buffer.from(req.get('Authorization').split(' ')[1], 'base64').toString().split(':') //Authentication
         const username = credentials[0]
@@ -91,7 +81,7 @@ const updateProduct = async (req, res) => {
             bcrypt.compare(password, r.password, (err, result) => { //Check if the password matches
                 if(result){
 //Check for Validations
-                    if(req.body.quantity>=0 && req.body.quantity<=100 && validateOne(req) && validateTwo(req) && (JSON.stringify(req.body) == JSON.stringify(Objbg))){
+                    if(req.body.quantity>=0 && req.body.quantity<=100 && validateTwo(req) && numFields==5){
                         Product.findOne({where:{sku:req.body.sku}}).then((results) => {  //Check if Sku exists or not
                      if(!results || results.id==id){  
                         
@@ -173,15 +163,21 @@ const deleteProduct = async (req, res) => {
             User.findOne({where:{username:username}}).then((r)=>{  //Check if the username exists or not
                 if(r){  console.log("Inside the r")
                 bcrypt.compare(password, r.password, (err, result) => { //Check if the password matches
-                    if(result){ console.log("Inside the result")
+                    if(result){ 
+                        Image.destroy({where:{product_id:id}}).then((dels)=>{
+                            if(dels){  
 
                         Product.destroy({where:{id:id, owner_user_id:r.id}}).then((del)=>{  // Delete the product if the id and the user id matches
                             if(del){
                                
-                                res.status(204).send();}
+                                res.status(204).send();
+                            }
                             else{
                                 res.status(403).send("Forbidden");}
                         })
+                    }
+                    else{res.status(401).send("Bad Request")}
+                })
 
 
                     }else {res.status(401).send("Unauthorized");}
@@ -239,7 +235,7 @@ const patchProduct = async (req, res) => {
 
                                 
 
-                                if(validateThree(req)&&validateOne(req)){
+                                if(validateThree(req)){
                                 Product.update(info, {where: {id: id, owner_user_id:r.id}} ).then((sanju)=>{  //Update the product if the user id is matching
     
                                     if(sanju[0]){res.status(204).send("No Content");}  //Updated successfully
@@ -259,7 +255,7 @@ const patchProduct = async (req, res) => {
                                         }
                                         else{
 
-                                            if(validateThree(req)&&validateOne(req)){
+                                            if(validateThree(req)){
                                             console.log("inside if r1 --2")
                                             Product.update(info, {where: {id: id, owner_user_id:r.id}} ).then((sanju)=>{  //Update the product if the user id is matching
     
@@ -305,7 +301,8 @@ const patchProduct = async (req, res) => {
 
 
 const validateTwo = (req) => {
-    if(!(req.body.sku===undefined) && !(req.body.manufacturer===undefined )&&!(req.body.name===undefined) &&!(req.body.description===undefined)&&!(req.body.quantity==undefined)) {
+    if(!(req.body.sku===undefined) && !(req.body.manufacturer===undefined )&&!(req.body.name===undefined) &&!(req.body.description===undefined)&&!(req.body.quantity==undefined)
+    && req.body.id===undefined && req.body.date_added===undefined && req.body.date_last_updated===undefined && req.body.owner_user_id === undefined) {
 
         return true
     }
@@ -324,19 +321,6 @@ const validateThree = (req) => {
 
 }
 
-const validateOne = (req) => {
-    if(req.body.description != null){
-    if(!(req.body.description === "") && !req.body.description.match(/\s/) ){
-        return true
-    }
-    else{
-        return false
-    }}
-    else{
-        return false
-    }
-
-}
 
 module.exports = {
     addProduct,
