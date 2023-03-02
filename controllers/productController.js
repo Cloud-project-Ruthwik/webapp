@@ -325,15 +325,16 @@ const validateThree = (req) => {
 }
 
 const validateOne = (req) => {
-    const regex =  "^\\s*$";
-    const re =  '^[A-Za-z ]+';
-    if(!(req.body.quantity===undefined)){  
-    if(!req.body.description.match(regex) && req.body.description == null) {
-        
+    if(req.body.description != null){
+    if(!(req.body.description === "") && !req.body.description.match(/\s/) ){
         return true
     }
-    return false}
-    else{return true;}
+    else{
+        return false
+    }}
+    else{
+        return false
+    }
 
 }
 
