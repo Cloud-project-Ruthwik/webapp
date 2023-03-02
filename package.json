@@ -10,7 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "aws-sdk": "^2.1325.0",
+    "aws-sdk": "^2.1326.0",
     "bcrypt": "^5.1.0",
     "chai": "^4.3.7",
     "config": "^3.3.9",
