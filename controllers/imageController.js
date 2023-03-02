@@ -22,8 +22,8 @@ const upload = multer({
 const bcrypt = require("bcrypt");  
 
 const s3 = new AWS.S3({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  accessKeyId: "AKIA3DSMITPOHNG76FPS",
+  secretAccessKey: "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"
 });
 
 const getImage = async (req, res) => {
@@ -84,7 +84,7 @@ const addImage = async (req, res) => {
                 const fileType = myFile[myFile.length - 1];
               
                 const params = {
-                  Bucket: process.env.AWS_BUCKET_NAME,
+                  Bucket: "img9141",
                   Key: uuid.v4() + "." + fileType,
                   Body: req.file.buffer
                 };
@@ -164,7 +164,7 @@ const deleteImage = async (req, res) => {
                 const deleteFile = (filePath) => {
                   
                   const params = {
-                    Bucket: process.env.AWS_BUCKET_NAME,
+                    Bucket: "img9141",
                     Key: filePath.split('/')[3]
                   };
                   
