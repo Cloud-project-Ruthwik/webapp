@@ -1,16 +1,20 @@
 const db = require('../models');
 const bcrypt = require("bcrypt");     
 const { and } = require('sequelize');
+const AWS = require('aws-sdk');
 const regex =  '^[A-Za-z ]+';
 //create main model
 
 const User = db.stud;
 const Product = db.product;
 const Image = db.image;
-
 //functions
 
 //Add Product
+const s3 = new AWS.S3({
+  accessKeyId : process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey : process.env.AWS_SECRET_ACCESS_KEY
+  });
 
 const addProduct = async (req, res) => {
 const date = new Date();
@@ -29,7 +33,7 @@ if(req.get('Authorization')){      //Checking if Basic Authorization is enabled 
         sku = req.body.sku;
         
 //The validations include entering all the values to add a product, making sure entered fields are not empty or white spaces.
-        if(req.body.quantity>=0 && req.body.quantity<=100 && !(req.body.description === "") && !req.body.description.match(/\s/) && req.body.description != null && validateTwo(req) && numFields==5){
+        if(req.body.quantity>=0 && req.body.quantity<=100 && !(req.body.description === "") && req.body.description.trim().length != 0 && req.body.description != null && validateTwo(req) && numFields==5){
             Product.findOne({where:{sku:sku}}).then((results) => {   //Checking if the sku value is unique or not
          if(!results){      
             let info = {
@@ -44,7 +48,7 @@ if(req.get('Authorization')){      //Checking if Basic Authorization is enabled 
     }
     
     Product.create(info).then((product)=>{  //Creating the product
-    res.status(200).send(product);})}else {res.status(400).send("Bad Request");}   //Sending a Bad Request if the Sku already exists
+    res.status(201).send(product);})}else {res.status(400).send("Bad Request");}   //Sending a Bad Request if the Sku already exists
 }  
 
 )}else {res.status(400).send("Bad Request");}  // Sending a Bad request if the validations are not approved
@@ -60,7 +64,7 @@ if(req.get('Authorization')){      //Checking if Basic Authorization is enabled 
    
     
 }
-else {res.status(403).send("Forbidden");} //Forbidden if the authorization does not exist
+else {res.status(401).send("Unauthorized");} //Unauthorized if the authorization does not exist
 }
 
 
@@ -81,7 +85,7 @@ const updateProduct = async (req, res) => {
             bcrypt.compare(password, r.password, (err, result) => { //Check if the password matches
                 if(result){
 //Check for Validations
-                    if(req.body.quantity>=0 && req.body.quantity<=100 && validateTwo(req) && numFields==5){
+                    if(req.body.quantity>=0 && req.body.quantity<=100 && validateTwo(req) && !(req.body.description === "") && req.body.description.trim().length != 0 && req.body.description != null && numFields==5){
                         Product.findOne({where:{sku:req.body.sku}}).then((results) => {  //Check if Sku exists or not
                      if(!results || results.id==id){  
                         
@@ -117,11 +121,11 @@ const updateProduct = async (req, res) => {
             })}else {res.status(401).send("Unauthorized");}   // Send Unauthorized if the Username Does not Exist
         })
     
-    }else {res.status(400).send("Bad Request");}  //Send a Bad request if the Basic Authentication is not Enabled
+    }else {res.status(401).send("Unauthorized");}  //Send a Bad request if the Basic Authentication is not Enabled
 }
-else {res.status(400).send("Bad Request");}   // Send a Bad Request if the Product ID does not exist
+else {res.status(404).send("Not Found");}   // Send a Forbidden if the Product ID does not exist
 })
-}else {res.status(403).send("Forbidden");} 
+}else {res.status(403).send("Forbidden");} // Send Forbidden if non number ID is passed
 }
 
 const getAllProducts = async (req, res) => {
@@ -131,6 +135,7 @@ const getAllProducts = async (req, res) => {
 
 const getProduct = async (req, res) => {
     let id = req.params.id;
+    if(id>0){
     Product.findOne({where:{id:id}}).then((users)=>{   
         if(users){     
 
@@ -145,8 +150,9 @@ const getProduct = async (req, res) => {
         date_added: p.date_added,
         date_last_updated: p.date_last_updated,
         owner_user_id: p.owner_user_id
-    })}else{res.status(403).send("Forbidden");}
-})
+    })}else{res.status(404).send("Not Found");}  //Send Forbidden if no product exists
+})}
+else{res.status(403).send("Forbidden")} // Send Forbidden if id is not number
 }
   
 const deleteProduct = async (req, res) => {
@@ -163,9 +169,32 @@ const deleteProduct = async (req, res) => {
             User.findOne({where:{username:username}}).then((r)=>{  //Check if the username exists or not
                 if(r){  console.log("Inside the r")
                 bcrypt.compare(password, r.password, (err, result) => { //Check if the password matches
-                    if(result){ 
-                        Image.destroy({where:{product_id:id}}).then((dels)=>{
-                            if(dels){  
+                    if(result){
+
+                        Image.findAll({ where: { product_id: id } }).then((images) => {
+                            // Loop through each image and delete it from S3
+                            images.forEach((image) => {
+                              const deleteFile = (filePath) => {
+                                const params = {
+                                  Bucket: process.env.AWS_BUCKET_NAME,
+                                  Key: filePath.split('/')[3],
+                                };
+                                s3.deleteObject(params, (err, data) => {
+                                  if (err) {
+                                    console.log(err);
+                                  } else {
+                                    console.log(`File ${filePath} deleted successfully`);
+                                  }
+                                });
+                              };
+                              deleteFile(image.s3_bucket_path);
+                            });
+                          }).catch((err) => {
+                            console.log(err);
+                          });
+
+                        Image.destroy({where:{product_id:id}}).then((dels)=>{ //Find the Images of the product
+                            if(dels){ 
 
                         Product.destroy({where:{id:id, owner_user_id:r.id}}).then((del)=>{  // Delete the product if the id and the user id matches
                             if(del){
@@ -173,25 +202,37 @@ const deleteProduct = async (req, res) => {
                                 res.status(204).send();
                             }
                             else{
-                                res.status(403).send("Forbidden");}
+                                res.status(403).send("Forbidden");}  //Send Forbidden if user does not own the data
                         })
                     }
-                    else{res.status(401).send("Bad Request")}
+                    else{
+
+                        Product.destroy({where:{id:id, owner_user_id:r.id}}).then((del)=>{  // Delete the product if the id and the user id matches
+                            if(del){
+                               
+                                res.status(204).send();
+                            }
+                            else{
+                                res.status(403).send("Forbidden");}   //Send Forbidden is User does not own the product
+                        })
+
+
+                    }
                 })
 
 
-                    }else {res.status(401).send("Unauthorized");}
+                    }else {res.status(401).send("Unauthorized");} // Send Unauthorized if Password does not match
                 })
-            } else {res.status(401).send("Unauthorized");}
+            } else {res.status(401).send("Unauthorized");} // Send Unauthorized if Username does not match
         
         })
-            }  else {res.status(400).send("Bad Request");} 
+            }  else {res.status(401).send("Unauthorized");} // Send Unauthorized if Basic auth is not enabled
 
 
-    }else {res.status(404).send("Not Found");}
+    }else {res.status(404).send("Not Found");} //Send not found is product does not exist
 
 })
-    }else {res.status(403).send("Forbidden");} 
+    }else {res.status(403).send("Forbidden");}  // Send Forbidden if non number is given for id
 } 
 
 
@@ -235,7 +276,7 @@ const patchProduct = async (req, res) => {
 
                                 
 
-                                if(validateThree(req)){
+                                if(validateThree(req) && validateFour(req)){
                                 Product.update(info, {where: {id: id, owner_user_id:r.id}} ).then((sanju)=>{  //Update the product if the user id is matching
     
                                     if(sanju[0]){res.status(204).send("No Content");}  //Updated successfully
@@ -255,7 +296,7 @@ const patchProduct = async (req, res) => {
                                         }
                                         else{
 
-                                            if(validateThree(req)){
+                                            if(validateThree(req)&&validateFour(req)){
                                             console.log("inside if r1 --2")
                                             Product.update(info, {where: {id: id, owner_user_id:r.id}} ).then((sanju)=>{  //Update the product if the user id is matching
     
@@ -280,7 +321,8 @@ const patchProduct = async (req, res) => {
                                 })
 
                               }
-                          
+
+
 
                         } else{res.status(400).send("Bad Request");} //Send a Bad Request of the Required fields are not there
 
@@ -289,13 +331,13 @@ const patchProduct = async (req, res) => {
             } else {res.status(401).send("Unauthorized");} //If the Username does not match or exist
         
         })
-            }  else {res.status(400).send("Bad Request");} //If Authorization is not enabled
+            }  else {res.status(401).send("Unauthorized");} //If Authorization is not enabled
 
 
-    }else {res.status(403).send("Forbidden");} //Forbidden if the ID does not exist
+    }else {res.status(404).send("Not Found");} //Not Found if the ID does not exist
 
 })
-    }else {res.status(403).send("Forbidden");} 
+    }else {res.status(403).send("Forbidden");}  //if non number id is given
 
 }
 
@@ -319,6 +361,19 @@ const validateThree = (req) => {
 
         else{return true;}
 
+}
+
+const validateFour = (req) => {
+    const id = req.params.id;
+    if(req.body.description===undefined){
+        return true;
+    }
+    else{
+        if(!(req.body.description === "") && req.body.description.trim().length != 0 && req.body.description != null){
+            return true;
+        }
+        else{return false;}
+    }
 }
 
 
