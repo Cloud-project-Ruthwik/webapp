@@ -22,8 +22,8 @@ const upload = multer({
 const bcrypt = require("bcrypt");  
 
 const s3 = new AWS.S3({
-  accessKeyId: "AKIA3DSMITPOHNG76FPS",
-  secretAccessKey: "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"
+  accessKeyId : "AKIA3DSMITPOHNG76FPS",
+  secretAccessKey : "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"
 });
 
 const getImage = async (req, res) => {
@@ -44,18 +44,18 @@ const getImage = async (req, res) => {
              Image.findAll({where:{product_id:product_id}}).then((images)=>{
               if(images){
                 res.status(200).send(images);
-              }else {res.status(403).send("Forbidden")}
+              }else {res.status(403).send("Forbidden")} //Forbidden if the image is not under product
              })
               }
-              else {res.status(403).send("Forbidden")}
+              else {res.status(404).send("Not Found")} //Product does not exist
 
-            })}else {res.status(403).send("Forbidden")}
+            })}else {res.status(403).send("Forbidden")} //Forbidden is ID is non number
             
           } else {res.status(401).send("Unauthorized");}
       })
     } else {res.status(401).send("Unauthorized");}
   })
-} else {res.status(403).send("Forbidden");}
+} else {res.status(401).send("  Unauthorized");}
 }
 
 const addImage = async (req, res) => {
@@ -75,7 +75,7 @@ const addImage = async (req, res) => {
             Product.findOne({where:{id:product_id, owner_user_id:r.id}}).then((imao) => {  //Checking if the User owns the product or not
               if(imao){ 
                 if (!req.file) {
-                 res.status(400).send("Bad Request")
+                 res.status(400).send("Bad Request") //If no image is found
                 }
                 else {
                   if(isImage(req.file)){
@@ -84,7 +84,7 @@ const addImage = async (req, res) => {
                 const fileType = myFile[myFile.length - 1];
               
                 const params = {
-                  Bucket: "img9141",
+                  Bucket: "demo-tf-s3-sumanayana",
                   Key: uuid.v4() + "." + fileType,
                   Body: req.file.buffer
                 };
@@ -102,16 +102,15 @@ const addImage = async (req, res) => {
                 }
               
                 Image.create(info).then((image) => {
-                  res.status(200).send(image)
-                }) }); } 
-                else{res.status(400).send("Bad  Request")}
+                  res.status(201).send(image)
+                }) }); }else{ res.status(400).send("Bad Request")}  //If the image is not created
               }
-              } else {res.status(403).send("Forbidden")}
+              } else {res.status(404).send("Not Found")}
               
             })} else {res.status(403).send("Forbidden")}
           } else {res.status(401).send("Unauthorized")}
         })} else {res.status(401).send("Unauthorized")}
-      })} else {res.status(403).send("Forbidden")} 
+      })} else {res.status(403).send("Unauthorized")} 
 }
 
 const getImagebyID = async (req, res) => {
@@ -139,7 +138,7 @@ const getImagebyID = async (req, res) => {
         })
       } else {res.status(401).send("Unauthorized")}
     })
-  } else {res.status(403).send("Forbidden")} 
+  } else {res.status(403).send("Unauthorized")} 
 
 }
 
@@ -164,7 +163,7 @@ const deleteImage = async (req, res) => {
                 const deleteFile = (filePath) => {
                   
                   const params = {
-                    Bucket: "img9141",
+                    Bucket: "demo-tf-s3-sumanayana",
                     Key: filePath.split('/')[3]
                   };
                   
@@ -183,22 +182,22 @@ const deleteImage = async (req, res) => {
                       res.status(204).send();}
                   else{
                       res.status(403).send("Forbidden");}
-              }) } else {res.status(403).send("Forbidden")} 
+              }) } else {res.status(401).send("Not Found")} 
             
             })
-       } else {res.status(403).send("Forbidden")}  
+       } else {res.status(401).send("Not Found")}  
           })
           }else {res.status(403).send("Forbidden")} 
           } else {res.status(401).send("Unauthorized")}
         })
       } else {res.status(401).send("Unauthorized")}
     })
-  } else {res.status(403).send("Forbidden")} 
+  } else {res.status(401).send("Unauthorized")} 
 }
 
 function isImage(file) {
 
-  if (file.mimetype=='image/jpg' || file.mimetype == 'image/jpeg', file.mimetype=='image/png') {
+  if (file.mimetype=='image/jpg' || file.mimetype == 'image/jpeg'|| file.mimetype=='image/png') {
    
     return true;
   }

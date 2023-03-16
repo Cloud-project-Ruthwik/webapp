@@ -28,7 +28,7 @@ const addUsers = async(req, res)=>{
         }
 
   User.create(info).then((user)=>{ //Creating the user and pushing it to the database
-    res.status(200).send({
+    res.status(201).send({
 
        "id": user.id,
         "first_name": user.first_name,
@@ -95,8 +95,8 @@ const getUser = async (req, res) => {
 })}
 else {res.status(401).send("Unauthorized");} //Send Unauthorized if the Username does not match
 }
-else{res.status(403).send("Forbidden");}  //Send Forbidden if the authorization is not given }
-}else{res.status(403).send("Forbidden")}
+else{res.status(401).send("Unauthorized");}  //Send Unauthorized if the authorization is not given }
+}else{res.status(403).send("Forbidden")}  //Forbidden if anything other than number is given for the id
 }
 
 //Update User
@@ -104,7 +104,7 @@ else{res.status(403).send("Forbidden");}  //Send Forbidden if the authorization 
 const updateUsers = async (req, res) => {
   const date = new Date();
     const id = req.params.id;
-    if(id>0){
+    if(id>0){ //Check if the id given is number or not
     const numFields = Object.keys(req.body).length;
     if(validateThree(req)&&validateTwo(req)&&validateOne(req)&& numFields==4){ //Check the validations
     let u = await User.findOne({where:{id:id}})
@@ -157,13 +157,13 @@ const updateUsers = async (req, res) => {
 
 }
 
-else{res.status(403).send("Forbidden")} //Send Forbidden if there is no Authorization
+else{res.status(401).send("Unauthorized")} //Send Unauthorized if there is no Authorization
 
 }}
 
     else{res.status(400).send("Bad Request");} //Send Bad Request if the validations are not passing
 
-}else{res.status(403).send("Forbidden")} 
+}else{res.status(403).send("Forbidden")}  //Send Forbidden if the ID is not number
 }
 
 const validateOne = (req) => {
