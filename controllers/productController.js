@@ -12,8 +12,8 @@ const Image = db.image;
 
 //Add Product
 const s3 = new AWS.S3({
-  accessKeyId : process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey : process.env.AWS_SECRET_ACCESS_KEY
+  accessKeyId : "AKIA3DSMITPOHNG76FPS",
+  secretAccessKey : "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"
   });
 
 const addProduct = async (req, res) => {
