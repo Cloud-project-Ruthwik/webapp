@@ -84,7 +84,7 @@ const addImage = async (req, res) => {
                 const fileType = myFile[myFile.length - 1];
               
                 const params = {
-                  Bucket: "demo-tf-s3-ruthwik",
+                  Bucket: process.env.AWS_BUCKET_NAME,
                   Key: uuid.v4() + "." + fileType,
                   Body: req.file.buffer
                 };
@@ -163,7 +163,7 @@ const deleteImage = async (req, res) => {
                 const deleteFile = (filePath) => {
                   
                   const params = {
-                    Bucket: "demo-tf-s3-ruthwik",
+                    Bucket: process.env.AWS_BUCKET_NAME,
                     Key: filePath.split('/')[3]
                   };
                   
