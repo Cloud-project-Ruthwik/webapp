@@ -21,4 +21,4 @@ APIs are built as per specifications here:  https://app.swaggerhub.com/apis-docs
 In order to make pull or merge requests the test cases in the workflow should pass. 
 
 The entire application is deployed on an EC2 instance using Packer
-Run the above code to create an AMI which can be used to create the necessary EC2 instances.
+Run the above code to create an AMI which can be used to create the necessary EC2 instances
