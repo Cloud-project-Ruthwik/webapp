@@ -1,0 +1,33 @@
+{
+    "agent": {
+        "metrics_collection_interval": 10,
+        "logfile": "/var/logs/amazon-cloudwatch-agent.log"
+    },
+    "logs": {
+        "logs_collected": {
+            "files": {
+                "collect_list": [
+                    {
+                        "file_path": "/home/ec2-user/.pm2/logs/server-error.log",
+                        "log_group_name": "my-webapp-err-group",
+                        "log_stream_name": "webapp"
+                    },
+                    {
+                        "file_path": "/home/ec2-user/.pm2/logs/server-out.log",
+                        "log_group_name": "my-webapp-info-group",
+                        "log_stream_name": "webapp"
+                    }
+                ]
+            }
+        }
+    },
+    "metrics":{
+      "metrics_collected":{
+         "statsd":{
+            "service_address":":8125",
+            "metrics_collection_interval":10,
+            "metrics_aggregation_interval":10
+         }
+      }
+   }
+}

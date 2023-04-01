@@ -9,6 +9,12 @@ const storage = multer.memoryStorage({
   }
 });
 
+const StatsD = require('statsd-client');
+const statsdClient = new StatsD({
+host: 'localhost',
+port: 8125
+});
+
 const User = db.stud;
 const Product = db.product;
 const Image = db.image;
@@ -22,12 +28,11 @@ const upload = multer({
 const bcrypt = require("bcrypt");  
 
 const s3 = new AWS.S3({
-  accessKeyId : "AKIA3DSMITPOHNG76FPS",
-  secretAccessKey : "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"
+
 });
 
 const getImage = async (req, res) => {
-
+  statsdClient.increment('get.image.counter');
   if(req.get('Authorization')){      //Checking if Basic Authorization is enabled or not
     const credentials = Buffer.from(req.get('Authorization').split(' ')[1], 'base64').toString().split(':')
     const username = credentials[0]
@@ -47,7 +52,7 @@ const getImage = async (req, res) => {
               }else {res.status(403).send("Forbidden")} //Forbidden if the image is not under product
              })
               }
-              else {res.status(404).send("Not Found")} //Product does not exist
+              else {res.status(403).send("Forbidden")} //Product does not exist
 
             })}else {res.status(403).send("Forbidden")} //Forbidden is ID is non number
             
@@ -61,7 +66,7 @@ const getImage = async (req, res) => {
 const addImage = async (req, res) => {
   const date = new Date(); 
 
-
+  statsdClient.increment('upload.image.counter');
   if(req.get('Authorization')){      //Checking if Basic Authorization is enabled or not
     const credentials = Buffer.from(req.get('Authorization').split(' ')[1], 'base64').toString().split(':')
     const username = credentials[0]
@@ -114,6 +119,7 @@ const addImage = async (req, res) => {
 }
 
 const getImagebyID = async (req, res) => {
+  statsdClient.increment('view.image.counter');
   if(req.get('Authorization')){      //Checking if Basic Authorization is enabled or not
     const credentials = Buffer.from(req.get('Authorization').split(' ')[1], 'base64').toString().split(':')
     const username = credentials[0]
@@ -143,7 +149,7 @@ const getImagebyID = async (req, res) => {
 }
 
 const deleteImage = async (req, res) => {
-
+  statsdClient.increment('delete.image.counter');
   if(req.get('Authorization')){      //Checking if Basic Authorization is enabled or not
     const credentials = Buffer.from(req.get('Authorization').split(' ')[1], 'base64').toString().split(':')
     const username = credentials[0]

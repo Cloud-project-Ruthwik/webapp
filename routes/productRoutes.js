@@ -2,6 +2,7 @@ const productController = require('../controllers/productController.js');
 const imageController = require('../controllers/imageController.js');
 const { image } = require('../models/index.js');
 const router = require('express').Router()
+const dbConfig = require('../config/db.Config');
 
 router.post("/", productController.addProduct);
 router.get('/', productController.getAllProducts);
