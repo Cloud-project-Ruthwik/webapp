@@ -27,7 +27,7 @@
       "instance_type": "{{user `instance_type`}}",
       "ssh_username": "{{user `ssh_username`}}",
       "ami_name": "{{user `ami_name`}}",
-      "ami_users": ["615679487028","049089338565"] 
+      "ami_users": ["882783971484","763590384604"] 
     }
   ],
   
