@@ -4,7 +4,11 @@ const { and } = require('sequelize');
 const AWS = require('aws-sdk');
 const regex =  '^[A-Za-z ]+';
 //create main model
-
+const StatsD = require('statsd-client');
+const statsdClient = new StatsD({
+  host: 'localhost',
+  port: 8125
+});
 const User = db.stud;
 const Product = db.product;
 const Image = db.image;
@@ -12,11 +16,11 @@ const Image = db.image;
 
 //Add Product
 const s3 = new AWS.S3({
-  accessKeyId : "AKIA3DSMITPOHNG76FPS",
-  secretAccessKey : "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"
+
   });
 
 const addProduct = async (req, res) => {
+    statsdClient.increment('create.product.counter');
 const date = new Date();
 const numFields = Object.keys(req.body).length;
 if(req.get('Authorization')){      //Checking if Basic Authorization is enabled or not
@@ -69,7 +73,7 @@ else {res.status(401).send("Unauthorized");} //Unauthorized if the authorization
 
 
 const updateProduct = async (req, res) => {
-
+    statsdClient.increment('update.product.counter');
     const id = req.params.id;
     if(id>0){
     Product.findOne({where:{id:id}}).then((results) => {  //Check if the Product ID exists or not
@@ -134,6 +138,7 @@ const getAllProducts = async (req, res) => {
 }
 
 const getProduct = async (req, res) => {
+    statsdClient.increment('view.product.counter');
     let id = req.params.id;
     if(id>0){
     Product.findOne({where:{id:id}}).then((users)=>{   
@@ -156,7 +161,7 @@ else{res.status(403).send("Forbidden")} // Send Forbidden if id is not number
 }
   
 const deleteProduct = async (req, res) => {
-
+    statsdClient.increment('delete.product.counter');
     const id = req.params.id;
     if(id>0){
     Product.findOne({where:{id:id}}).then((results) => {  //Check if the Product ID exists or not
@@ -172,26 +177,27 @@ const deleteProduct = async (req, res) => {
                     if(result){
 
                         Image.findAll({ where: { product_id: id } }).then((images) => {
+                            console.log(images);
+                            console.log("After images");
                             // Loop through each image and delete it from S3
-                            images.forEach((image) => {
-                              const deleteFile = (filePath) => {
-                                const params = {
-                                  Bucket: process.env.AWS_BUCKET_NAME,
-                                  Key: filePath.split('/')[3],
+                            for (const image of images) {
+                                const deleteFile = (filePath) => {
+                                    const params = {
+                                        Bucket: process.env.AWS_BUCKET_NAME,
+                                        Key: filePath.split("/")[3],
+                                    };
+                                    s3.deleteObject(params, (err, data) => {
+                                        if (err) {
+                                            console.log(err);
+                                        } else {
+                                            console.log(`File ${filePath} deleted successfully`);
+                                        }
+                                    });
                                 };
-                                s3.deleteObject(params, (err, data) => {
-                                  if (err) {
-                                    console.log(err);
-                                  } else {
-                                    console.log(`File ${filePath} deleted successfully`);
-                                  }
-                                });
-                              };
-                              deleteFile(image.s3_bucket_path);
-                            });
-                          }).catch((err) => {
-                            console.log(err);
-                          });
+                                deleteFile(image.s3_bucket_path);
+                            }
+//                         });
+
 
                         Image.destroy({where:{product_id:id}}).then((dels)=>{ //Find the Images of the product
                             if(dels){ 
@@ -218,7 +224,7 @@ const deleteProduct = async (req, res) => {
 
 
                     }
-                })
+                })  });
 
 
                     }else {res.status(401).send("Unauthorized");} // Send Unauthorized if Password does not match
@@ -237,6 +243,7 @@ const deleteProduct = async (req, res) => {
 
 
 const patchProduct = async (req, res) => {
+    statsdClient.increment('patch.product.counter');
     Objbg = {                                      // Creating a JSON Object with required variables of Payload.
         "name": req.body.name,
         "description": req.body.description,

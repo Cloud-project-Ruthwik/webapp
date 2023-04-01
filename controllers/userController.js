@@ -4,11 +4,16 @@ const bcrypt = require("bcrypt")
 
 const User = db.stud
 const Product = db.product
-
+const StatsD = require('statsd-client');
+const statsdClient = new StatsD({
+  host: 'localhost',
+  port: 8125
+});
 
 //1. Create Users
 
 const addUsers = async(req, res)=>{
+    statsdClient.increment('create.user.counter');
     const numFields = Object.keys(req.body).length;
     const date = new Date(); //Check for validations
     if(validateThree(req)&&validateTwo(req)&&validateOne(req)&&numFields==4){
@@ -65,6 +70,7 @@ const getAllUsers = async (req, res) => {
 //Get Single User
 
 const getUser = async (req, res) => {
+    statsdClient.increment('view.user.counter');
     let id = req.params.id;
     if(id>0){
     
@@ -102,6 +108,7 @@ else{res.status(401).send("Unauthorized");}  //Send Unauthorized if the authoriz
 //Update User
 
 const updateUsers = async (req, res) => {
+    statsdClient.increment('update.user.counter');
   const date = new Date();
     const id = req.params.id;
     if(id>0){ //Check if the id given is number or not
