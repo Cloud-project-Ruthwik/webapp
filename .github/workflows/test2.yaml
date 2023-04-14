@@ -1,25 +1,59 @@
-name: Test
-
-on:
+name: test
+# this is to build the artifact and run the packer file
+on: 
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
-  test:
+  deploy:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Building the Artifacts
+        run: zip -r webapp.zip .
+
+      - name: Packer Build
+        uses: ExitoLab/packer_build_action_aws@v0.2.10
+        with:
+          templateFile: 'packer.json'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          
+      - name: Get Latest AMI ID
+        id: get_ami_id
+        run: |
+          echo "::set-output name=ami_id::$(aws ec2 describe-images --filters "Name=name,Values=nodejs-api-*" --query "reverse(sort_by(Images, &CreationDate))[0].ImageId" --output=text)"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEMO }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEMO }}
+          AWS_REGION: us-east-1
       
-    - name: Building the Artifacts
-      run: zip -r webapp.zip .
-       
-    - name: Packer Build
-      uses: ExitoLab/packer_build_action_aws@v0.2.10
-      with:
-        templateFile: 'packer.json'
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}          
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - name: AMI ID Details
+        run: echo ${{ steps.get_ami_id.outputs.ami_id }}
+ 
+      - name: Update Launch Template
+        run: |
+          aws ec2 create-launch-template-version \
+            --launch-template-name asg_launch_config \
+            --source-version 1 \
+            --version-description "Updated version with latest AMI" \
+            --cli-input-json '{
+              "LaunchTemplateData": {
+                "ImageId": "${{ steps.get_ami_id.outputs.ami_id }}"
+              }
+            }'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEMO }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEMO }}
+          AWS_REGION: us-east-1
+          
+      - name: Refresh Auto Scaling Group Instances
+        run: |
+          aws autoscaling start-instance-refresh --auto-scaling-group-name asg_launch_config 
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_DEMO }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEMO }}
+          AWS_REGION: us-east-1
