@@ -19,7 +19,7 @@ describe('Test API Health End Point and API Validations', () => {
 
   it(' Test API Health End Point', (done) => {
     request(app)
-      .get('/v1/user/2')
+      .get('/v2/user/2')
       .expect(401)
       .end((err, res) => {
         if (err){ 
@@ -33,7 +33,7 @@ describe('Test API Health End Point and API Validations', () => {
 
   it(' Test API Health End Point', (done) => {
     request(app)
-      .put('/v1/user/2')
+      .put('/v2/user/2')
       .expect(400)
       .end((err, res) => {
         if (err){ 
